@@ -1,3 +1,4 @@
+import io
 import time
 import streamlit as st
 import pandas as pd
@@ -9,10 +10,17 @@ st.markdown("Ladda upp en CSV med serveringsställen för att automatiskt hämta
 uploaded = st.file_uploader("Ladda upp CSV", type="csv")
 
 if uploaded:
-    try:
-        df = pd.read_csv(uploaded, sep=None, engine="python", encoding_errors="replace")
-    except Exception as e:
-        st.error(f"Kunde inte läsa filen: {e}")
+    raw = uploaded.read()
+    df = None
+    for encoding in ("utf-8-sig", "utf-8", "latin-1", "cp1252"):
+        try:
+            text = raw.decode(encoding)
+            df = pd.read_csv(io.StringIO(text), sep=None, engine="python")
+            break
+        except Exception:
+            continue
+    if df is None:
+        st.error("Kunde inte läsa filen. Kontrollera att det är en giltig CSV.")
         st.stop()
 
     missing_cols = [c for c in ["Serveringsställe", "Postort"] if c not in df.columns]
