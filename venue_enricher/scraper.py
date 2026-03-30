@@ -1,8 +1,7 @@
-import time
 import httpx
 import re
 from bs4 import BeautifulSoup
-from googlesearch import search
+from duckduckgo_search import DDGS
 
 SKIP_DOMAINS = [
     "hitta.se", "eniro.se", "allabolag.se", "ratsit.se",
@@ -24,9 +23,11 @@ def enrich_row(name: str, city: str) -> tuple[str | None, str | None]:
 
 def google_first_hit(query: str) -> str | None:
     try:
-        for url in search(query, num_results=5, lang="sv"):
-            if not any(skip in url for skip in SKIP_DOMAINS):
-                return url
+        with DDGS() as ddgs:
+            for r in ddgs.text(query, max_results=5, region="se-sv"):
+                url = r.get("href", "")
+                if url and not any(skip in url for skip in SKIP_DOMAINS):
+                    return url
     except Exception:
         pass
     return None
