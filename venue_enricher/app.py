@@ -9,7 +9,11 @@ st.markdown("Ladda upp en CSV med serveringsställen för att automatiskt hämta
 uploaded = st.file_uploader("Ladda upp CSV", type="csv")
 
 if uploaded:
-    df = pd.read_csv(uploaded)
+    try:
+        df = pd.read_csv(uploaded, sep=None, engine="python", encoding_errors="replace")
+    except Exception as e:
+        st.error(f"Kunde inte läsa filen: {e}")
+        st.stop()
 
     missing_cols = [c for c in ["Serveringsställe", "Postort"] if c not in df.columns]
     if missing_cols:
