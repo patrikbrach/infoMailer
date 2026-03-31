@@ -27,7 +27,7 @@ HEADERS = {
     "Accept-Language": "sv-SE,sv;q=0.9,en;q=0.8",
 }
 
-TIMEOUT = 10
+TIMEOUT = 5
 
 SITE_BLOCKLIST = {
     "eniro.se", "hitta.se", "allabolag.se", "ratsit.se", "merinfo.se",
@@ -175,23 +175,32 @@ def _find_website(name: str, city: str) -> str | None:
 
 
 def _scrape_site(url: str) -> tuple[list[str], list[str]]:
-    """Scrape homepage + common contact sub-pages. Returns (emails, phones)."""
-    all_emails: list[str] = []
-    all_phones: list[str] = []
+    """Scrape homepage first; only fetch contact sub-pages if homepage lacks email."""
     parsed = urlparse(url)
     base = f"{parsed.scheme}://{parsed.netloc}"
-    pages = [url] + [base + path for path in CONTACT_PATHS]
 
-    for page_url in pages:
-        soup, html = _fetch_page(page_url)
-        if soup is None:
-            continue
-        all_emails.extend(_extract_emails(soup, html))
-        all_phones.extend(_extract_phones(soup))
-        all_emails = list(dict.fromkeys(all_emails))
-        all_phones = list(dict.fromkeys(all_phones))
-        if all_emails and all_phones:
-            break
+    all_emails: list[str] = []
+    all_phones: list[str] = []
+
+    # Always scrape homepage
+    soup, html = _fetch_page(url)
+    if soup is not None:
+        all_emails = _extract_emails(soup, html)
+        all_phones = _extract_phones(soup)
+
+    # Only dig into sub-pages if we still have no email
+    if not all_emails:
+        for path in CONTACT_PATHS:
+            page_url = base + path
+            soup, html = _fetch_page(page_url)
+            if soup is None:
+                continue
+            all_emails.extend(_extract_emails(soup, html))
+            all_phones.extend(_extract_phones(soup))
+            all_emails = list(dict.fromkeys(all_emails))
+            all_phones = list(dict.fromkeys(all_phones))
+            if all_emails:
+                break
 
     return all_emails, all_phones
 
