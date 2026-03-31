@@ -30,11 +30,21 @@ HEADERS = {
 TIMEOUT = 5
 
 SITE_BLOCKLIST = {
+    # Swedish directories
     "eniro.se", "hitta.se", "allabolag.se", "ratsit.se", "merinfo.se",
-    "birthday.se", "facebook.com", "instagram.com", "twitter.com", "x.com",
-    "linkedin.com", "youtube.com", "tiktok.com", "tripadvisor.com",
-    "tripadvisor.se", "google.com", "google.se", "yelp.com",
-    "trustpilot.com", "thefork.com", "bokabord.se",
+    "birthday.se", "foretagsfakta.se", "foretagsinfo.se", "telefonnummer.se",
+    # Booking / review platforms
+    "tripadvisor.com", "tripadvisor.se", "yelp.com", "thefork.com",
+    "bokabord.se", "trustpilot.com", "opentable.com",
+    # Social media
+    "facebook.com", "instagram.com", "twitter.com", "x.com",
+    "linkedin.com", "youtube.com", "tiktok.com",
+    # Search / maps
+    "google.com", "google.se", "bing.com", "maps.google.com",
+    # Wikis / encyclopedias (catches baidu.com etc.)
+    "wikipedia.org", "wikimedia.org", "baidu.com", "baike.baidu.com",
+    # Other noise
+    "wikidata.org", "dbpedia.org", "foursquare.com",
 }
 
 EMAIL_JUNK_DOMAINS = {
@@ -162,7 +172,8 @@ def _find_website(name: str, city: str) -> str | None:
     if DDGS is None:
         logger.warning("duckduckgo-search not installed, skipping DDG search.")
         return None
-    query = f"{name} {city}".strip()
+    parts = [name, city, "Sverige"]
+    query = " ".join(p for p in parts if p).strip()
     try:
         with DDGS() as ddgs:
             for result in ddgs.text(query, region="se-sv", max_results=8):
