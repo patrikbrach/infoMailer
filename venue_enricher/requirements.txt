@@ -1,5 +1,0 @@
-streamlit
-pandas
-httpx
-beautifulsoup4
-duckduckgo-search
